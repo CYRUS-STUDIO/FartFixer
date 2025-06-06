@@ -1,30 +1,45 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM 检查是否提供了两个参数
-if "%~2"=="" (
-    echo 用法: 拖入 dex 文件 和 bin 文件，或通过命令行传参
-    echo 示例: FartFixer.bat D:\classes.dex D:\code_item.bin
+:: 输入 bin 文件目录
+set /p BIN_DIR=请输入 bin 文件所在目录:
+
+:: 判断目录是否存在
+if not exist "%BIN_DIR%" (
+    echo 错误：目录 %BIN_DIR% 不存在
     pause
     exit /b
 )
 
-REM 读取参数
-set "DEX_PATH=%~1"
-set "BIN_PATH=%~2"
+:: 遍历 bin 文件
+for %%B in ("%BIN_DIR%\*.bin") do (
+    set "BIN_FILE=%%~nxB"
+    set "PREFIX="
+    set "BIN_PATH=%%~fB"
 
-REM 获取 dex 文件所在目录和文件名
-for %%F in ("%DEX_PATH%") do (
-    set "DEX_DIR=%%~dpF"
-    set "DEX_NAME=%%~nF"
+    :: 提取前缀，比如 11994176_
+    for /f "tokens=1 delims=_" %%P in ("%%~nB") do (
+        set "PREFIX=%%P_"
+    )
+
+    :: 查找匹配的 dex 文件
+    for %%D in ("%BIN_DIR%\!PREFIX!*.dex") do (
+        set "DEX_FILE=%%~nxD"
+        set "DEX_PATH=%%~fD"
+
+        :: 创建 fix 目录
+        set "FIX_DIR=%%~dpDfix"
+        if not exist "!FIX_DIR!" (
+            mkdir "!FIX_DIR!"
+        )
+
+        :: 构造输出路径
+        set "FIXED_DEX=!FIX_DIR!\!DEX_FILE:_file=_file_fix!"
+
+        echo 修复 !DEX_FILE!，使用 !BIN_FILE! ...
+        java -jar ./FartFixer.jar "!DEX_PATH!" "!BIN_PATH!" "!FIXED_DEX!"
+    )
 )
 
-REM 构造输出路径
-set "OUT_PATH=%DEX_DIR%%DEX_NAME%_fix.dex"
-
-REM 执行命令
-java -jar "%~dp0FartFixer.jar" "%DEX_PATH%" "%BIN_PATH%" "%OUT_PATH%"
-
-echo.
-echo 修复完成，输出文件: %OUT_PATH%
+echo 全部修复完成。
 pause

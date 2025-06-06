@@ -1,23 +1,30 @@
 #!/bin/bash
 
-# 检查参数个数
-if [ $# -ne 2 ]; then
-    echo "用法: 拖入 dex 文件 和 bin 文件（或通过命令行传参）"
-    echo "示例: ./fartfixer.sh path/to/classes.dex path/to/libfart.so"
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <bin_dir>"
     exit 1
 fi
 
-DEX_PATH="$1"
-BIN_PATH="$2"
+BIN_DIR="$1"
 
-# 获取目录、文件名和输出路径
-FILE_DIR=$(dirname "$DEX_PATH")
-FILE_BASE=$(basename "$DEX_PATH")
-FILE_NAME="${FILE_BASE%.*}"
-OUT_PATH="$FILE_DIR/${FILE_NAME}_fix.dex"
+# 查找所有 .bin 文件
+find "$BIN_DIR" -type f -name "*.bin" | while read BIN_PATH; do
+    BIN_FILE=$(basename "$BIN_PATH")
+    PREFIX="${BIN_FILE%%_*}_"  # 提取前缀，例如 11994176_
 
-# 执行修复命令
-java -jar "$(dirname "$0")/FartFixer.jar" "$DEX_PATH" "$BIN_PATH" "$OUT_PATH"
+    # 查找对应的 dex 文件
+    find "$BIN_DIR" -type f -name "${PREFIX}*.dex" | while read DEX_PATH; do
+        DEX_FILE=$(basename "$DEX_PATH")
+        DEX_DIR=$(dirname "$DEX_PATH")
 
-echo
-echo "修复完成，输出文件: $OUT_PATH"
+        # 创建 fix 目录
+        FIX_DIR="$DEX_DIR/fix"
+        mkdir -p "$FIX_DIR"
+
+        # 构造输出路径
+        FIXED_DEX="$FIX_DIR/${DEX_FILE/_file/_file_fix}"
+
+        echo "修复 $DEX_FILE，使用 $BIN_FILE ..."
+        java -jar ./FartFixer.jar "$DEX_PATH" "$BIN_PATH" "$FIXED_DEX"
+    done
+done
