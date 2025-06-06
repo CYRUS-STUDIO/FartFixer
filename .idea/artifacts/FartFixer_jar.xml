@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="FartFixer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/FartFixer_jar</output-path>
+    <root id="archive" name="FartFixer.jar">
+      <element id="module-output" name="FartFixer" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/gson-2.7.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
